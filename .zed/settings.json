@@ -55,7 +55,7 @@
 		},
 		"TypeScript": {
 			"tab_size": 2,
-			"language_servers": ["tsgo", "vtsls"],
+			"language_servers": ["tsgo", "vtsls", "biome"],
 			"format_on_save": "on",
 			"formatter": [
 				{ "code_action": "source.fixAll.biome" },
@@ -65,7 +65,7 @@
 		},
 		"TSX": {
 			"tab_size": 2,
-			"language_servers": ["tsgo", "vtsls"],
+			"language_servers": ["tsgo", "vtsls", "biome"],
 			"format_on_save": "on",
 			"formatter": [
 				{ "code_action": "source.fixAll.biome" },
