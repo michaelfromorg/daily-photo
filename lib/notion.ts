@@ -5,7 +5,7 @@ import { config } from "../constants/config";
 
 const notion = new Client({ auth: config.notionToken });
 
-export async function uploadPhotoToNotion(photoUri: string) {
+export async function uploadPhotoToNotion(photoUri: string, caption: string) {
     try {
         const fileName = `photo-${Date.now()}.jpg`;
 
@@ -52,7 +52,9 @@ export async function uploadPhotoToNotion(photoUri: string) {
                     title: [
                         {
                             text: {
-                                content: `Photo - ${new Date().toLocaleDateString()}`,
+                                content:
+                                    caption ||
+                                    `Photo - ${new Date().toLocaleDateString()}`,
                             },
                         },
                     ],

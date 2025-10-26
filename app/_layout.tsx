@@ -12,7 +12,7 @@ export default function RootLayout() {
         <Stack>
             <Stack.Screen name="index" options={{ title: "Daily Photo" }} />
             <Stack.Screen name="settings" options={{ title: "Settings" }} />
-            <Stack.Screen name="history" options={{ title: "Photo History" }} />
+            {/*<Stack.Screen name="history" options={{ title: "Photo History" }} />*/}
         </Stack>
     );
 }

@@ -1,3 +1,97 @@
 {
-    "auto_indent": true
+	"auto_install_extensions": {
+		"html": true,
+		"dockerfile": true,
+		"docker-compose": true
+	},
+	"cursor_shape": "hollow",
+	"vim_mode": true,
+	"languages": {
+		"Python": {
+			"tab_size": 4,
+			"language_servers": ["basedpyright", "ruff"],
+			"format_on_save": "on",
+			"formatter": [
+				{ "code_action": "source.fixAll.ruff" },
+				{ "code_action": "source.organizeImports.ruff" },
+				{ "language_server": { "name": "ruff" } }
+			]
+		},
+		"Rust": {
+			"tab_size": 4
+		},
+		"Go": {
+			"tab_size": 4
+		},
+		"Shell Script": {
+			"tab_size": 4
+		},
+		"Markdown": {
+			"tab_size": 2
+		},
+		"Markdown-Inline": {
+			"tab_size": 2
+		},
+		"Java": {
+			"tab_size": 4
+		},
+		"C": {
+			"tab_size": 4
+		},
+		"C++": {
+			"tab_size": 4
+		},
+		"JSDoc": {
+			"tab_size": 2
+		},
+		"JavaScript": {
+			"tab_size": 2,
+			"format_on_save": "on",
+			"formatter": [
+				{ "code_action": "source.fixAll.biome" },
+				{ "code_action": "source.organizeImports.biome" },
+				{ "language_server": { "name": "biome" } }
+			]
+		},
+		"TypeScript": {
+			"tab_size": 2,
+			"language_servers": ["tsgo", "vtsls"],
+			"format_on_save": "on",
+			"formatter": [
+				{ "code_action": "source.fixAll.biome" },
+				{ "code_action": "source.organizeImports.biome" },
+				{ "language_server": { "name": "biome" } }
+			]
+		},
+		"TSX": {
+			"tab_size": 2,
+			"language_servers": ["tsgo", "vtsls"],
+			"format_on_save": "on",
+			"formatter": [
+				{ "code_action": "source.fixAll.biome" },
+				{ "code_action": "source.organizeImports.biome" },
+				{ "language_server": { "name": "biome" } }
+			]
+		},
+		"JSON": {
+			"tab_size": 2,
+			"format_on_save": "on",
+			"formatter": [{ "language_server": { "name": "biome" } }]
+		},
+		"JSONC": {
+			"tab_size": 2,
+			"format_on_save": "on",
+			"formatter": [{ "language_server": { "name": "biome" } }]
+		},
+		"CSS": {
+			"tab_size": 2,
+			"format_on_save": "on",
+			"formatter": [{ "language_server": { "name": "biome" } }]
+		},
+		"HTML": {
+			"tab_size": 2,
+			"format_on_save": "on",
+			"formatter": [{ "language_server": { "name": "biome" } }]
+		}
+	}
 }

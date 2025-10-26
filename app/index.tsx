@@ -6,18 +6,24 @@ import {
     TouchableOpacity,
     Alert,
     Image,
+    TextInput,
 } from "react-native";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { uploadPhotoToNotion } from "../lib/notion";
 import { saveLastPhotoTime } from "../lib/storage";
+import { manipulateAsync, FlipType, SaveFormat } from "expo-image-manipulator";
 
 export default function HomeScreen() {
-    const [facing, setFacing] = useState<CameraType>("back");
     const [permission, requestPermission] = useCameraPermissions();
+
+    const [facing, setFacing] = useState<CameraType>("back");
     const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
+    const [isUploading, setIsUploading] = useState<boolean>(false);
+    const [caption, setCaption] = useState<string>("");
+
     const cameraRef = useRef<CameraView>(null);
+
     const router = useRouter();
 
     if (!permission) {
@@ -41,8 +47,18 @@ export default function HomeScreen() {
     const takePicture = async () => {
         if (!cameraRef.current) return;
 
-        const photo = await cameraRef.current.takePictureAsync();
+        let photo = await cameraRef.current.takePictureAsync({
+            mirror: false,
+        });
+        // TODO(michaelfromyeg): this is a terrible hack; make it correct
         if (photo) {
+            if (facing === "front") {
+                photo = (await manipulateAsync(
+                    photo.uri,
+                    [{ flip: FlipType.Horizontal }],
+                    { compress: 1, format: SaveFormat.JPEG },
+                )) as any;
+            }
             setCapturedPhoto(photo.uri);
         }
     };
@@ -52,11 +68,13 @@ export default function HomeScreen() {
 
         setIsUploading(true);
         try {
-            await uploadPhotoToNotion(capturedPhoto);
+            await uploadPhotoToNotion(capturedPhoto, caption);
             await saveLastPhotoTime(Date.now());
             Alert.alert("Success!", "Photo uploaded to Notion");
             setCapturedPhoto(null);
+            setCaption("");
         } catch (error) {
+            console.error(error);
             Alert.alert("Error", "Failed to upload photo");
         } finally {
             setIsUploading(false);
@@ -70,11 +88,27 @@ export default function HomeScreen() {
     if (capturedPhoto) {
         return (
             <View style={styles.container}>
-                <Image source={{ uri: capturedPhoto }} style={styles.preview} />
+                <Image
+                    source={{ uri: capturedPhoto }}
+                    style={[
+                        styles.preview,
+                        // facing === "front" && styles.mirrorPreview, // Add conditional mirror style
+                    ]}
+                />
+                <TextInput
+                    style={styles.captionInput}
+                    placeholder="Add a caption..."
+                    value={caption}
+                    onChangeText={setCaption}
+                    multiline
+                />
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity
                         style={styles.button}
-                        onPress={() => setCapturedPhoto(null)}
+                        onPress={() => {
+                            setCapturedPhoto(null);
+                            setCaption(""); // Clear caption on retake
+                        }}
                         disabled={isUploading}
                     >
                         <Text style={styles.buttonText}>Retake</Text>
@@ -210,5 +244,17 @@ const styles = StyleSheet.create({
     message: {
         textAlign: "center",
         paddingBottom: 10,
+    },
+    captionInput: {
+        backgroundColor: "white",
+        padding: 15,
+        margin: 20,
+        marginTop: 0,
+        borderRadius: 8,
+        fontSize: 16,
+        minHeight: 60,
+    },
+    mirrorPreview: {
+        transform: [{ scaleX: -1 }],
     },
 });
