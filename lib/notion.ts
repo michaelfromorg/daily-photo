@@ -2,11 +2,23 @@
 import { Client } from "@notionhq/client";
 import * as FileSystem from "expo-file-system/legacy";
 import { config } from "../constants/config";
+import { getAccessToken } from "./auth";
 
-const notion = new Client({ auth: config.notionToken });
+// Create a function to get the Notion client with the current token
+async function getNotionClient(): Promise<Client> {
+    const oauthToken = await getAccessToken();
+    const token = oauthToken || config.notionToken;
+
+    if (!token || token === "ntn_TODO") {
+        throw new Error("No Notion token available. Please sign in with Notion.");
+    }
+
+    return new Client({ auth: token });
+}
 
 export async function uploadPhotoToNotion(photoUri: string, caption: string) {
     try {
+        const notion = await getNotionClient();
         const fileName = `photo-${Date.now()}.jpg`;
 
         console.log("Step 1: Creating file upload in Notion...");
@@ -22,6 +34,9 @@ export async function uploadPhotoToNotion(photoUri: string, caption: string) {
         console.log("✓ File upload created:", fileUploadResponse.id);
 
         console.log("Step 2: Uploading to Notion using FileSystem...");
+        const oauthToken = await getAccessToken();
+        const token = oauthToken || config.notionToken;
+
         const uploadResponse = await FileSystem.uploadAsync(
             fileUploadResponse.upload_url,
             photoUri,
@@ -30,7 +45,7 @@ export async function uploadPhotoToNotion(photoUri: string, caption: string) {
                 httpMethod: "POST",
                 uploadType: FileSystem.FileSystemUploadType.MULTIPART,
                 headers: {
-                    Authorization: `Bearer ${config.notionToken}`,
+                    Authorization: `Bearer ${token}`,
                     "Notion-Version": "2022-06-28",
                 },
             },

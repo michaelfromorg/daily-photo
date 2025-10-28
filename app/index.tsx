@@ -1,7 +1,7 @@
 import { type CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import { FlipType, manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
 	Alert,
 	Image,
@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { uploadPhotoToNotion } from "../lib/notion";
 import { saveLastPhotoTime } from "../lib/storage";
+import { getAccessToken } from "../lib/auth";
 import { AppText } from "./components/Text";
 
 export default function HomeScreen() {
@@ -22,10 +23,20 @@ export default function HomeScreen() {
 	const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
 	const [isUploading, setIsUploading] = useState<boolean>(false);
 	const [caption, setCaption] = useState<string>("");
+	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
 	const cameraRef = useRef<CameraView>(null);
 
 	const router = useRouter();
+
+	useEffect(() => {
+		const checkAuth = async () => {
+			const token = await getAccessToken();
+			setIsAuthenticated(!!token);
+		};
+
+		checkAuth();
+	}, []);
 
 	if (!permission) {
 		return <View />;
@@ -64,6 +75,25 @@ export default function HomeScreen() {
 	const uploadPhoto = async () => {
 		if (!capturedPhoto) return;
 
+		// Check authentication before uploading
+		if (!isAuthenticated) {
+			Alert.alert(
+				"Not Signed In",
+				"Please sign in with Notion in Settings before uploading photos.",
+				[
+					{
+						text: "Go to Settings",
+						onPress: () => router.push("/settings"),
+					},
+					{
+						text: "Cancel",
+						style: "cancel",
+					},
+				]
+			);
+			return;
+		}
+
 		setIsUploading(true);
 		try {
 			await uploadPhotoToNotion(capturedPhoto, caption);
@@ -73,7 +103,27 @@ export default function HomeScreen() {
 			setCaption("");
 		} catch (error) {
 			console.error(error);
-			Alert.alert("Error", "Failed to upload photo");
+			const errorMessage = error instanceof Error ? error.message : "Failed to upload photo";
+
+			// If the error is about missing token, prompt to sign in
+			if (errorMessage.includes("sign in")) {
+				Alert.alert(
+					"Authentication Required",
+					"Please sign in with Notion in Settings.",
+					[
+						{
+							text: "Go to Settings",
+							onPress: () => router.push("/settings"),
+						},
+						{
+							text: "Cancel",
+							style: "cancel",
+						},
+					]
+				);
+			} else {
+				Alert.alert("Error", errorMessage);
+			}
 		} finally {
 			setIsUploading(false);
 		}
