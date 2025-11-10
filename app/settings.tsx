@@ -6,23 +6,28 @@ import {
 	scheduleRandomDailyNotification,
 } from "../lib/notifications";
 import { useNotionAuth } from "../lib/notionAuth";
+import { getDatabaseId } from "../lib/storage";
 
 export default function SettingsScreen() {
 	const [scheduledTime, setScheduledTime] = useState<{
 		hour: number;
 		minute: number;
 	} | null>(null);
+	const [databaseId, setDatabaseId] = useState<string | null>(null);
 
 	const { workspaceName, logout } = useNotionAuth();
 	const router = useRouter();
 
 	useEffect(() => {
-		const loadScheduledTime = async () => {
+		const loadData = async () => {
 			const time = await getScheduledNotificationTime();
 			setScheduledTime(time);
+
+			const dbId = await getDatabaseId();
+			setDatabaseId(dbId);
 		};
 
-		loadScheduledTime();
+		loadData();
 	}, []);
 
 	const rescheduleNotification = async () => {
@@ -32,6 +37,10 @@ export default function SettingsScreen() {
 			"Scheduled!",
 			`New notification time: ${hour}:${minute.toString().padStart(2, "0")}`,
 		);
+	};
+
+	const handleChangeDatabase = () => {
+		router.push("/database-selection");
 	};
 
 	const handleLogout = () => {
@@ -74,6 +83,26 @@ export default function SettingsScreen() {
 				>
 					<Text style={styles.buttonText}>Disconnect Notion</Text>
 				</TouchableOpacity>
+			</View>
+
+			{/* Database Section */}
+			<View style={styles.section}>
+				<Text style={styles.sectionTitle}>Database</Text>
+				{databaseId ? (
+					<Text style={styles.info}>Database ID: {databaseId}</Text>
+				) : (
+					<Text style={[styles.info, styles.warningText]}>
+						No database selected
+					</Text>
+				)}
+				<TouchableOpacity style={styles.button} onPress={handleChangeDatabase}>
+					<Text style={styles.buttonText}>
+						{databaseId ? "Change Database" : "Select Database"}
+					</Text>
+				</TouchableOpacity>
+				<Text style={styles.description}>
+					Select which Notion database your daily photos will be saved to
+				</Text>
 			</View>
 
 			{/* Notifications Section */}
@@ -145,5 +174,8 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		color: "#666",
 		lineHeight: 20,
+	},
+	warningText: {
+		color: "#FF9500",
 	},
 });

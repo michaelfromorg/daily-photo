@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
+/** TODO(michaelfromyeg): make this not ugly */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
 	const { code, state, error } = req.query;
 

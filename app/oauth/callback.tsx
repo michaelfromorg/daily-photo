@@ -9,6 +9,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
  * The actual token processing is handled by the useNotionAuth hook
  * via deep link listeners. This screen just shows a loading state
  * and redirects to the main app.
+ *
+ * TODO(michaelfromyeg): make this not ugly
  */
 export default function OAuthCallbackScreen() {
 	const router = useRouter();

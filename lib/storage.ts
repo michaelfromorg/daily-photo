@@ -10,6 +10,7 @@ const KEYS = {
 	BOT_ID: "notion_bot_id",
 	WORKSPACE_ID: "notion_workspace_id",
 	WORKSPACE_NAME: "notion_workspace_name",
+	DATABASE_ID: "notion_database_id",
 } as const;
 
 // Determine if running on web
@@ -101,6 +102,15 @@ export async function getWorkspaceInfo() {
 	};
 }
 
+// Database ID storage
+export async function saveDatabaseId(databaseId: string) {
+	await setItem(KEYS.DATABASE_ID, databaseId);
+}
+
+export async function getDatabaseId(): Promise<string | null> {
+	return await getItem(KEYS.DATABASE_ID);
+}
+
 // Clear all OAuth-related data
 export async function clearOAuthData() {
 	await Promise.all([
@@ -109,5 +119,6 @@ export async function clearOAuthData() {
 		deleteItem(KEYS.BOT_ID),
 		deleteItem(KEYS.WORKSPACE_ID),
 		deleteItem(KEYS.WORKSPACE_NAME),
+		deleteItem(KEYS.DATABASE_ID),
 	]);
 }

@@ -1,7 +1,7 @@
 import { Client } from "@notionhq/client";
 import * as FileSystem from "expo-file-system/legacy";
 import { config } from "../constants/config";
-import { getAccessToken } from "./storage";
+import { getAccessToken, getDatabaseId } from "./storage";
 
 import "cross-fetch/polyfill";
 import { Platform } from "react-native";
@@ -20,13 +20,61 @@ async function getNotionClient(): Promise<Client> {
 
 	return new Client({
 		auth: token,
+		notionVersion: "2025-09-03",
 		fetch: Platform.OS === "web" ? window.fetch.bind(window) : undefined,
 	});
+}
+
+/**
+ * Search for all accessible databases in the user's Notion workspace
+ * In API 2025-09-03, this searches for data sources (which are the tables/databases)
+ */
+export async function searchDatabases() {
+	try {
+		const notion = await getNotionClient();
+
+		const response = await notion.search({
+			filter: {
+				property: "object",
+				value: "data_source",
+			},
+			sort: {
+				direction: "descending",
+				timestamp: "last_edited_time",
+			},
+		});
+
+		return response.results
+			.filter((result: any) => result.object === "data_source")
+			.map((dataSource: any) => {
+				const title = dataSource.title?.[0]?.plain_text || "Untitled Database";
+				return {
+					id: dataSource.id,
+					title,
+					properties: Object.keys(dataSource.properties || {}),
+					url: dataSource.url,
+					lastEditedTime: dataSource.last_edited_time,
+				};
+			});
+	} catch (error) {
+		console.error("❌ Error searching databases:", error);
+		throw error;
+	}
 }
 
 export async function uploadPhotoToNotion(photoUri: string, caption: string) {
 	try {
 		const notion = await getNotionClient();
+		// Note: In API 2025-09-03, this is actually a data source ID
+		// but we keep the variable name for backwards compatibility
+		const databaseId = await getDatabaseId();
+
+		if (!databaseId) {
+			throw new Error(
+				"No database selected. Please select a database in settings.",
+			);
+		}
+
 		const fileName = `photo-${Date.now()}.jpg`;
 
 		console.log("Step 1: Creating file upload in Notion...");
@@ -56,7 +104,7 @@ export async function uploadPhotoToNotion(photoUri: string, caption: string) {
 				uploadType: FileSystem.FileSystemUploadType.MULTIPART,
 				headers: {
 					Authorization: `Bearer ${token}`,
-					"Notion-Version": "2022-06-28",
+					"Notion-Version": "2025-09-03",
 				},
 			},
 		);
@@ -67,10 +115,11 @@ export async function uploadPhotoToNotion(photoUri: string, caption: string) {
 			throw new Error(`Upload failed: ${uploadResponse.body}`);
 		}
 
-		console.log("Step 3: Creating page in database...");
+		console.log("Step 3: Creating page in data source...");
 		const page = await notion.pages.create({
 			parent: {
-				database_id: config.databaseId,
+				type: "data_source_id",
+				data_source_id: databaseId,
 			},
 			properties: {
 				Caption: {

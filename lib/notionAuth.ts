@@ -139,8 +139,9 @@ export function useNotionAuth() {
 
 			// Parse the URL to extract OAuth tokens
 			const parsedUrl = Linking.parse(url);
+			console.log("Parsed URL:", parsedUrl);
 
-			if (parsedUrl.path === "oauth/callback" && parsedUrl.queryParams) {
+			if (parsedUrl.path === "callback" && parsedUrl.queryParams) {
 				handleOAuthCallback(
 					parsedUrl.queryParams as unknown as NotionOAuthTokens,
 				);

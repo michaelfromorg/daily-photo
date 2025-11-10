@@ -1,9 +1,10 @@
 import { Inter_900Black, useFonts } from "@expo-google-fonts/inter";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { requestPermissions } from "../lib/notifications";
 import { useNotionAuth } from "../lib/notionAuth";
+import { getDatabaseId } from "../lib/storage";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -11,6 +12,7 @@ export default function RootLayout() {
 	const [loaded, error] = useFonts({
 		Inter_900Black,
 	});
+	const [hasDatabaseId, setHasDatabaseId] = useState<boolean | null>(null);
 
 	const { isAuthenticated, isLoading } = useNotionAuth();
 	const segments = useSegments();
@@ -25,20 +27,50 @@ export default function RootLayout() {
 		requestPermissions();
 	}, [loaded, error]);
 
-	// Handle authentication redirects
+	// Check for database ID
 	useEffect(() => {
-		if (isLoading || !loaded) return;
+		const checkDatabaseId = async () => {
+			if (isAuthenticated) {
+				const dbId = await getDatabaseId();
+				setHasDatabaseId(!!dbId);
+			} else {
+				setHasDatabaseId(null);
+			}
+		};
+
+		checkDatabaseId();
+	}, [isAuthenticated]);
+
+	// Handle authentication and database selection redirects
+	useEffect(() => {
+		if (isLoading || !loaded || hasDatabaseId === null) return;
 
 		const inAuthGroup = segments[0] === "login" || segments[0] === "oauth";
+		const inDatabaseSelection = segments[0] === "database-selection";
 
 		if (!isAuthenticated && !inAuthGroup) {
 			// Redirect to login if not authenticated
 			router.replace("/login");
-		} else if (isAuthenticated && inAuthGroup) {
-			// Redirect to main app if authenticated
+		} else if (
+			isAuthenticated &&
+			!hasDatabaseId &&
+			!inDatabaseSelection &&
+			!inAuthGroup
+		) {
+			// Redirect to database selection if authenticated but no database selected
+			router.replace("/database-selection");
+		} else if (isAuthenticated && hasDatabaseId && inAuthGroup) {
+			// Redirect to main app if authenticated and has database
 			router.replace("/");
 		}
-	}, [isAuthenticated, isLoading, loaded, segments, router.replace]);
+	}, [
+		isAuthenticated,
+		isLoading,
+		loaded,
+		hasDatabaseId,
+		segments,
+		router.replace,
+	]);
 
 	if (!loaded && !error) {
 		return null;
@@ -64,6 +96,10 @@ export default function RootLayout() {
 		>
 			<Stack.Screen name="index" options={{ title: "Daily Photo" }} />
 			<Stack.Screen name="settings" options={{ title: "Settings" }} />
+			<Stack.Screen
+				name="database-selection"
+				options={{ title: "Select Database" }}
+			/>
 			<Stack.Screen
 				name="login"
 				options={{
