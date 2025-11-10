@@ -11,9 +11,10 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
+import { scheduleRandomDailyNotification } from "../lib/notifications";
 import { uploadPhotoToNotion } from "../lib/notion";
 import { saveLastPhotoTime } from "../lib/storage";
-import { AppText } from "./components/Text";
+import { AppText } from "../components/Text";
 
 export default function HomeScreen() {
 	const [permission, requestPermission] = useCameraPermissions();
@@ -68,7 +69,14 @@ export default function HomeScreen() {
 		try {
 			await uploadPhotoToNotion(capturedPhoto, caption);
 			await saveLastPhotoTime(Date.now());
-			Alert.alert("Success!", "Photo uploaded to Notion");
+
+			// Reschedule notification for a new random time tomorrow
+			const { hour, minute } = await scheduleRandomDailyNotification();
+
+			Alert.alert(
+				"Success!",
+				`Photo uploaded to Notion\n\nTomorrow's reminder: ${hour}:${minute.toString().padStart(2, "0")}`,
+			);
 			setCapturedPhoto(null);
 			setCaption("");
 		} catch (error) {
@@ -127,39 +135,38 @@ export default function HomeScreen() {
 
 	return (
 		<View style={styles.container}>
-			<CameraView style={styles.camera} facing={facing} ref={cameraRef}>
-				<View style={styles.overlay}>
-					<View style={styles.topButtons}>
-						<TouchableOpacity
-							style={styles.iconButton}
-							onPress={() => router.push("/settings")}
-						>
-							<Text style={styles.iconText}>⚙️</Text>
-						</TouchableOpacity>
-						{/*<TouchableOpacity
-                            style={styles.iconButton}
-                            onPress={() => router.push("/history")}
-                        >
-                            <Text style={styles.iconText}>📚</Text>
-                        </TouchableOpacity>*/}
-					</View>
-					<View style={styles.bottomButtons}>
-						<TouchableOpacity
-							style={styles.iconButton}
-							onPress={toggleCameraFacing}
-						>
-							<Text style={styles.iconText}>🔄</Text>
-						</TouchableOpacity>
-						<TouchableOpacity
-							style={styles.captureButton}
-							onPress={takePicture}
-						>
-							<View style={styles.captureButtonInner} />
-						</TouchableOpacity>
-						<View style={styles.iconButton} />
-					</View>
+			<CameraView style={styles.camera} facing={facing} ref={cameraRef} />
+			<View style={styles.overlay}>
+				<View style={styles.topButtons}>
+					<TouchableOpacity
+						style={styles.iconButton}
+						onPress={() => router.push("/settings")}
+					>
+						<Text style={styles.iconText}>⚙️</Text>
+					</TouchableOpacity>
+					{/*<TouchableOpacity
+                        style={styles.iconButton}
+                        onPress={() => router.push("/history")}
+                    >
+                        <Text style={styles.iconText}>📚</Text>
+                    </TouchableOpacity>*/}
 				</View>
-			</CameraView>
+				<View style={styles.bottomButtons}>
+					<TouchableOpacity
+						style={styles.iconButton}
+						onPress={toggleCameraFacing}
+					>
+						<Text style={styles.iconText}>🔄</Text>
+					</TouchableOpacity>
+					<TouchableOpacity
+						style={styles.captureButton}
+						onPress={takePicture}
+					>
+						<View style={styles.captureButtonInner} />
+					</TouchableOpacity>
+					<View style={styles.iconButton} />
+				</View>
+			</View>
 		</View>
 	);
 }
@@ -172,7 +179,7 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	overlay: {
-		flex: 1,
+		...StyleSheet.absoluteFillObject,
 		backgroundColor: "transparent",
 		justifyContent: "space-between",
 	},

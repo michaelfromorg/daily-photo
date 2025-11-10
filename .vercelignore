@@ -1,0 +1,15 @@
+# Allowlist mode: Ignore everything at root, then explicitly allow what we need
+
+# Ignore everything at root level
+/*
+.claude
+
+# Allow only what's needed for API functions
+!api
+!package.json
+!package-lock.json
+!vercel.json
+!node_modules
+
+# Keep .gitignore for git integration
+!.gitignore

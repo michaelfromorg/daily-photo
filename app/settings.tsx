@@ -1,93 +1,149 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
-import { useState, useEffect } from "react";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import {
-    scheduleRandomDailyNotification,
-    getScheduledNotificationTime,
+	getScheduledNotificationTime,
+	scheduleRandomDailyNotification,
 } from "../lib/notifications";
+import { useNotionAuth } from "../lib/notionAuth";
 
 export default function SettingsScreen() {
-    const [scheduledTime, setScheduledTime] = useState<{
-        hour: number;
-        minute: number;
-    } | null>(null);
+	const [scheduledTime, setScheduledTime] = useState<{
+		hour: number;
+		minute: number;
+	} | null>(null);
 
-    useEffect(() => {
-        const loadScheduledTime = async () => {
-            const time = await getScheduledNotificationTime();
-            setScheduledTime(time);
-        };
+	const { workspaceName, logout } = useNotionAuth();
+	const router = useRouter();
 
-        loadScheduledTime();
-    }, []);
+	useEffect(() => {
+		const loadScheduledTime = async () => {
+			const time = await getScheduledNotificationTime();
+			setScheduledTime(time);
+		};
 
-    const rescheduleNotification = async () => {
-        const { hour, minute } = await scheduleRandomDailyNotification();
-        setScheduledTime({ hour, minute });
-        Alert.alert(
-            "Scheduled!",
-            `New notification time: ${hour}:${minute.toString().padStart(2, "0")}`,
-        );
-    };
+		loadScheduledTime();
+	}, []);
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Notification Settings</Text>
+	const rescheduleNotification = async () => {
+		const { hour, minute } = await scheduleRandomDailyNotification();
+		setScheduledTime({ hour, minute });
+		Alert.alert(
+			"Scheduled!",
+			`New notification time: ${hour}:${minute.toString().padStart(2, "0")}`,
+		);
+	};
 
-            {scheduledTime && (
-                <Text style={styles.info}>
-                    Current notification time: {scheduledTime.hour}:
-                    {scheduledTime.minute.toString().padStart(2, "0")}
-                </Text>
-            )}
+	const handleLogout = () => {
+		Alert.alert(
+			"Disconnect Notion",
+			"Are you sure you want to disconnect your Notion workspace? You'll need to reconnect to upload photos.",
+			[
+				{
+					text: "Cancel",
+					style: "cancel",
+				},
+				{
+					text: "Disconnect",
+					style: "destructive",
+					onPress: async () => {
+						try {
+							await logout();
+							router.replace("/login");
+						} catch (error) {
+							console.error(error);
+							Alert.alert("Error", "Failed to disconnect. Please try again.");
+						}
+					},
+				},
+			],
+		);
+	};
 
-            <TouchableOpacity
-                style={styles.button}
-                onPress={rescheduleNotification}
-            >
-                <Text style={styles.buttonText}>
-                    {scheduledTime ? "Reschedule" : "Schedule"} Random Daily
-                    Notification
-                </Text>
-            </TouchableOpacity>
+	return (
+		<View style={styles.container}>
+			{/* Notion Connection Section */}
+			<View style={styles.section}>
+				<Text style={styles.sectionTitle}>Notion Connection</Text>
+				{workspaceName && (
+					<Text style={styles.info}>Connected to: {workspaceName}</Text>
+				)}
+				<TouchableOpacity
+					style={[styles.button, styles.dangerButton]}
+					onPress={handleLogout}
+				>
+					<Text style={styles.buttonText}>Disconnect Notion</Text>
+				</TouchableOpacity>
+			</View>
 
-            <Text style={styles.description}>
-                This will send you a notification at a random time between 9 AM
-                and 9 PM each day
-            </Text>
-        </View>
-    );
+			{/* Notifications Section */}
+			<View style={styles.section}>
+				<Text style={styles.sectionTitle}>Notification Settings</Text>
+
+				{scheduledTime && (
+					<Text style={styles.info}>
+						Current notification time: {scheduledTime.hour}:
+						{scheduledTime.minute.toString().padStart(2, "0")}
+					</Text>
+				)}
+
+				<TouchableOpacity
+					style={styles.button}
+					onPress={rescheduleNotification}
+				>
+					<Text style={styles.buttonText}>
+						{scheduledTime ? "Reschedule" : "Schedule"} Random Daily
+						Notification
+					</Text>
+				</TouchableOpacity>
+
+				<Text style={styles.description}>
+					This will send you a notification at a random time between 9 AM and 9
+					PM each day
+				</Text>
+			</View>
+		</View>
+	);
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 20,
-        backgroundColor: "#fff",
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: "bold",
-        marginBottom: 20,
-    },
-    info: {
-        fontSize: 16,
-        marginBottom: 20,
-    },
-    button: {
-        backgroundColor: "#007AFF",
-        padding: 15,
-        borderRadius: 8,
-        alignItems: "center",
-        marginBottom: 20,
-    },
-    buttonText: {
-        color: "white",
-        fontSize: 16,
-        fontWeight: "600",
-    },
-    description: {
-        fontSize: 14,
-        color: "#666",
-        textAlign: "center",
-    },
+	container: {
+		flex: 1,
+		padding: 20,
+		backgroundColor: "#fff",
+	},
+	section: {
+		marginBottom: 40,
+	},
+	sectionTitle: {
+		fontSize: 20,
+		fontWeight: "bold",
+		marginBottom: 15,
+		color: "#000",
+	},
+	info: {
+		fontSize: 16,
+		marginBottom: 15,
+		color: "#333",
+	},
+	button: {
+		backgroundColor: "#007AFF",
+		padding: 15,
+		borderRadius: 8,
+		alignItems: "center",
+		marginBottom: 15,
+	},
+	dangerButton: {
+		backgroundColor: "#FF3B30",
+	},
+	buttonText: {
+		color: "white",
+		fontSize: 16,
+		fontWeight: "600",
+	},
+	description: {
+		fontSize: 14,
+		color: "#666",
+		lineHeight: 20,
+	},
 });

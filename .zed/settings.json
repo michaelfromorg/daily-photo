@@ -5,7 +5,7 @@
 		"docker-compose": true
 	},
 	"cursor_shape": "hollow",
-	"vim_mode": true,
+	"vim_mode": false,
 	"languages": {
 		"Python": {
 			"tab_size": 4,
