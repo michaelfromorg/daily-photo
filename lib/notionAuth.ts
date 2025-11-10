@@ -2,6 +2,7 @@ import * as Crypto from "expo-crypto";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { useCallback, useEffect, useState } from "react";
+import { Platform } from "react-native";
 import { config } from "../constants/config";
 import {
 	clearOAuthData,
@@ -108,6 +109,31 @@ export function useNotionAuth() {
 			}
 		}
 
+		if (Platform.OS === "web") {
+			// On web, check if URL has OAuth tokens
+			const urlParams = new URLSearchParams(window.location.search);
+			if (urlParams.has("access_token")) {
+				const tokens: NotionOAuthTokens = {
+					access_token: urlParams.get("access_token") || "",
+					refresh_token: urlParams.get("refresh_token") || undefined,
+					bot_id: urlParams.get("bot_id") || undefined,
+					workspace_id: urlParams.get("workspace_id") || undefined,
+					workspace_name: urlParams.get("workspace_name") || undefined,
+				};
+
+				handleOAuthCallback(tokens);
+
+				// Clean up the query string
+				window.history.replaceState(
+					{},
+					document.title,
+					window.location.pathname,
+				);
+			}
+			return;
+		}
+
+		// Should only be called on mobile
 		function handleDeepLink({ url }: { url: string }) {
 			console.log("📱 Deep link received:", url);
 
@@ -161,10 +187,18 @@ export function useNotionAuth() {
 			console.log("🌐 Opening Notion OAuth...");
 			console.log("Redirect URI:", redirectUri);
 
+			// if (Platform.OS === "web") {
+			// 	// Just redirect browser directly (Vercel backend will handle callback)
+			// 	window.location.href = authUrl.toString();
+			// }
+
 			// Open browser for OAuth flow
 			const result = await WebBrowser.openAuthSessionAsync(
 				authUrl.toString(),
-				"dailynotion://", // The backend will redirect to this scheme
+				Platform.OS === "web"
+					? "https://ltcodoq-michaelfromyeg-8081.exp.direct"
+					: // The backend will redirect to this scheme
+						"dailynotion://",
 			);
 
 			console.log("OAuth browser result:", result.type);

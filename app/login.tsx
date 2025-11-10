@@ -8,8 +8,8 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import { useNotionAuth } from "../lib/notionAuth";
 import { AppText } from "../components/Text";
+import { useNotionAuth } from "../lib/notionAuth";
 
 export default function LoginScreen() {
 	const { isAuthenticated, isLoading, login } = useNotionAuth();

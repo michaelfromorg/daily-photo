@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 
-// Storage keys
+// Keys
 const KEYS = {
 	NOTIFICATION_ID: "notification_id",
 	LAST_PHOTO: "last_photo",
@@ -11,59 +12,87 @@ const KEYS = {
 	WORKSPACE_NAME: "notion_workspace_name",
 } as const;
 
+// Determine if running on web
+const isWeb = Platform.OS === "web";
+
+// Wrapper functions to abstract storage logic
+async function setItem(key: string, value: string) {
+	if (isWeb) {
+		localStorage.setItem(key, value);
+	} else {
+		await SecureStore.setItemAsync(key, value);
+	}
+}
+
+async function getItem(key: string): Promise<string | null> {
+	if (isWeb) {
+		return localStorage.getItem(key);
+	}
+	return await SecureStore.getItemAsync(key);
+}
+
+async function deleteItem(key: string) {
+	if (isWeb) {
+		localStorage.removeItem(key);
+	} else {
+		await SecureStore.deleteItemAsync(key);
+	}
+}
+
 // Notification storage
 export async function saveNotificationId(id: string) {
-	await SecureStore.setItemAsync(KEYS.NOTIFICATION_ID, id);
+	await setItem(KEYS.NOTIFICATION_ID, id);
 }
 
 export async function getNotificationId() {
-	return await SecureStore.getItemAsync(KEYS.NOTIFICATION_ID);
+	return await getItem(KEYS.NOTIFICATION_ID);
 }
 
 // Photo history storage
 export async function saveLastPhotoTime(timestamp: number) {
-	await SecureStore.setItemAsync(KEYS.LAST_PHOTO, timestamp.toString());
+	await setItem(KEYS.LAST_PHOTO, timestamp.toString());
 }
 
 export async function getLastPhotoTime(): Promise<number | null> {
-	const time = await SecureStore.getItemAsync(KEYS.LAST_PHOTO);
+	const time = await getItem(KEYS.LAST_PHOTO);
 	return time ? parseInt(time, 10) : null;
 }
 
 // OAuth token storage
 export async function saveAccessToken(token: string) {
-	await SecureStore.setItemAsync(KEYS.ACCESS_TOKEN, token);
+	await setItem(KEYS.ACCESS_TOKEN, token);
 }
 
 export async function getAccessToken(): Promise<string | null> {
-	return await SecureStore.getItemAsync(KEYS.ACCESS_TOKEN);
+	return await getItem(KEYS.ACCESS_TOKEN);
 }
 
 export async function saveRefreshToken(token: string) {
-	await SecureStore.setItemAsync(KEYS.REFRESH_TOKEN, token);
+	await setItem(KEYS.REFRESH_TOKEN, token);
 }
 
 export async function getRefreshToken(): Promise<string | null> {
-	return await SecureStore.getItemAsync(KEYS.REFRESH_TOKEN);
+	return await getItem(KEYS.REFRESH_TOKEN);
 }
 
+// Workspace info storage
 export async function saveWorkspaceInfo(
 	botId: string,
 	workspaceId: string,
 	workspaceName?: string,
 ) {
-	await SecureStore.setItemAsync(KEYS.BOT_ID, botId);
-	await SecureStore.setItemAsync(KEYS.WORKSPACE_ID, workspaceId);
+	await setItem(KEYS.BOT_ID, botId);
+	await setItem(KEYS.WORKSPACE_ID, workspaceId);
 	if (workspaceName) {
-		await SecureStore.setItemAsync(KEYS.WORKSPACE_NAME, workspaceName);
+		await setItem(KEYS.WORKSPACE_NAME, workspaceName);
 	}
 }
 
 export async function getWorkspaceInfo() {
 	const [botId, workspaceId, workspaceName] = await Promise.all([
-		SecureStore.getItemAsync(KEYS.BOT_ID),
-		SecureStore.getItemAsync(KEYS.WORKSPACE_ID),
-		SecureStore.getItemAsync(KEYS.WORKSPACE_NAME),
+		getItem(KEYS.BOT_ID),
+		getItem(KEYS.WORKSPACE_ID),
+		getItem(KEYS.WORKSPACE_NAME),
 	]);
 	return {
 		botId,
@@ -72,12 +101,13 @@ export async function getWorkspaceInfo() {
 	};
 }
 
+// Clear all OAuth-related data
 export async function clearOAuthData() {
 	await Promise.all([
-		SecureStore.deleteItemAsync(KEYS.ACCESS_TOKEN),
-		SecureStore.deleteItemAsync(KEYS.REFRESH_TOKEN),
-		SecureStore.deleteItemAsync(KEYS.BOT_ID),
-		SecureStore.deleteItemAsync(KEYS.WORKSPACE_ID),
-		SecureStore.deleteItemAsync(KEYS.WORKSPACE_NAME),
+		deleteItem(KEYS.ACCESS_TOKEN),
+		deleteItem(KEYS.REFRESH_TOKEN),
+		deleteItem(KEYS.BOT_ID),
+		deleteItem(KEYS.WORKSPACE_ID),
+		deleteItem(KEYS.WORKSPACE_NAME),
 	]);
 }

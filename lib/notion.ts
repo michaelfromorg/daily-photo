@@ -1,8 +1,10 @@
-// lib/notion.ts
 import { Client } from "@notionhq/client";
 import * as FileSystem from "expo-file-system/legacy";
 import { config } from "../constants/config";
 import { getAccessToken } from "./storage";
+
+import "cross-fetch/polyfill";
+import { Platform } from "react-native";
 
 /**
  * Get an authenticated Notion client using OAuth token from secure storage
@@ -16,7 +18,10 @@ async function getNotionClient(): Promise<Client> {
 		);
 	}
 
-	return new Client({ auth: token });
+	return new Client({
+		auth: token,
+		fetch: Platform.OS === "web" ? window.fetch.bind(window) : undefined,
+	});
 }
 
 export async function uploadPhotoToNotion(photoUri: string, caption: string) {

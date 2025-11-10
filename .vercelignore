@@ -9,7 +9,6 @@
 !package.json
 !package-lock.json
 !vercel.json
-!node_modules
 
 # Keep .gitignore for git integration
 !.gitignore

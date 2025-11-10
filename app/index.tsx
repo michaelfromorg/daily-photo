@@ -11,10 +11,10 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
+import { AppText } from "../components/Text";
 import { scheduleRandomDailyNotification } from "../lib/notifications";
 import { uploadPhotoToNotion } from "../lib/notion";
 import { saveLastPhotoTime } from "../lib/storage";
-import { AppText } from "../components/Text";
 
 export default function HomeScreen() {
 	const [permission, requestPermission] = useCameraPermissions();
@@ -158,10 +158,7 @@ export default function HomeScreen() {
 					>
 						<Text style={styles.iconText}>🔄</Text>
 					</TouchableOpacity>
-					<TouchableOpacity
-						style={styles.captureButton}
-						onPress={takePicture}
-					>
+					<TouchableOpacity style={styles.captureButton} onPress={takePicture}>
 						<View style={styles.captureButtonInner} />
 					</TouchableOpacity>
 					<View style={styles.iconButton} />

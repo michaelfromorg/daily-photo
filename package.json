@@ -15,6 +15,7 @@
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
     "@notionhq/client": "^5.3.0",
+    "cross-fetch": "^4.1.0",
     "expo": "54.0.23",
     "expo-auth-session": "~7.0.8",
     "expo-camera": "~17.0.9",
